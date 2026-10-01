@@ -1138,3 +1138,51 @@ body {
   background: rgba(37, 99, 235, 0.1);
 }
 
+/* ---------- Idioma y moneda ---------- */
+.nota-moneda {
+  margin: 10px 0 0 0;
+}
+
+/* ---------- Pantalla de bienvenida ---------- */
+.bienvenida {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--fondo);
+  overflow-y: auto;
+}
+
+.bienvenida-contenido {
+  width: 100%;
+  max-width: 420px;
+}
+
+.bienvenida-logo {
+  font-size: 56px;
+  text-align: center;
+}
+
+.bienvenida-titulo {
+  margin: 12px 0 8px 0;
+  font-size: 26px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.bienvenida-texto {
+  margin: 0 0 24px 0;
+  font-size: 15.5px;
+  color: var(--texto-secundario);
+  text-align: center;
+  line-height: 1.45;
+}
+
+.bienvenida .btn-primario {
+  margin-top: 24px;
+}
+

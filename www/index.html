@@ -130,6 +130,16 @@
   <section id="seccion-configuracion" class="seccion">
     <h2 class="seccion-titulo">Configuración</h2>
 
+    
+    <div class="card card-config">
+      <p class="card-label">Idioma y moneda</p>
+      <label class="campo-label" for="select-idioma">Idioma</label>
+      <select class="campo-input" id="select-idioma" onchange="cambiarIdioma(this.value)"></select>
+      <label class="campo-label" for="select-moneda">Moneda</label>
+      <select class="campo-input" id="select-moneda" onchange="cambiarMoneda(this.value)"></select>
+      <p class="config-ayuda nota-moneda">Cambiar la moneda no convierte tus montos; solo cambia cómo se muestran.</p>
+    </div>
+
     <div class="card card-config">
       <p class="card-label">Presupuesto mensual (opcional)</p>
       <p class="config-ayuda">Si lo pones, el inicio te muestra cuánto te queda cada mes. Déjalo vacío para solo llevar tus gastos.</p>
@@ -352,10 +362,28 @@
   </div>
 </div>
 
+<!-- ===================== BIENVENIDA (primera vez) ===================== -->
+<div class="bienvenida" id="bienvenida" hidden>
+  <div class="bienvenida-contenido">
+    <div class="bienvenida-logo" aria-hidden="true">&#128176;</div>
+    <h1 class="bienvenida-titulo" id="bienvenida-titulo">Te damos la bienvenida a FinanZapp</h1>
+    <p class="bienvenida-texto" id="bienvenida-texto">Elige tu idioma y tu moneda. Puedes cambiarlos cuando quieras en Configuración.</p>
+
+    <label class="campo-label" for="bienvenida-idioma" id="bienvenida-etiqueta-idioma">Idioma</label>
+    <select class="campo-input" id="bienvenida-idioma" onchange="elegirIdiomaBienvenida(this.value)"></select>
+
+    <label class="campo-label" for="bienvenida-moneda" id="bienvenida-etiqueta-moneda">Moneda</label>
+    <select class="campo-input" id="bienvenida-moneda" onchange="moneda = this.value"></select>
+
+    <button class="btn btn-primario" id="bienvenida-boton" onclick="terminarBienvenida()">Empezar</button>
+  </div>
+</div>
+
 <!-- ===================== TOAST ===================== -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="lib/jspdf.umd.min.js"></script>
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 <script src="fijos.js"></script>
 </body>

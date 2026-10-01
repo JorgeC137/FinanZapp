@@ -720,7 +720,7 @@ async function exportarInforme() {
   // Punto y coma: es el separador que espera Excel en español (Colombia).
   // El BOM (\uFEFF) hace que Excel lea bien las tildes.
   const contenido = "\uFEFF" + filas.map(function (fila) {
-    return fila.map(celdaCsv).join(";");
+    return fila.map(celdaCsv).join(separadorCsv());
   }).join("\r\n");
 
   const nombreArchivo = esMesCompleto(periodo)
@@ -729,12 +729,20 @@ async function exportarInforme() {
   await guardarArchivo(nombreArchivo + ".csv", contenido);
 }
 
+// Separador de columnas y decimales según el país, para que Excel lo abra bien
+function separadorCsv() {
+  return usaComaDecimal() ? ";" : ",";
+}
+
 function celdaCsv(valor) {
-  if (typeof valor === "number") return String(Math.round(valor));
+  if (typeof valor === "number") {
+    const numero = valor.toFixed(decimalesMoneda());
+    return usaComaDecimal() ? numero.replace(".", ",") : numero;
+  }
   let texto = valor == null ? "" : String(valor);
   // Evita que Excel interprete el texto como fórmula (inyección CSV)
   if (/^[=+\-@]/.test(texto)) texto = "'" + texto;
-  if (/[";\r\n]/.test(texto)) texto = '"' + texto.replace(/"/g, '""') + '"';
+  if (/[";,\r\n]/.test(texto)) texto = '"' + texto.replace(/"/g, '""') + '"';
   return texto;
 }
 
@@ -879,7 +887,7 @@ async function exportarAnualCsv() {
   });
 
   const contenido = "\uFEFF" + filas.map(function (fila) {
-    return fila.map(celdaCsv).join(";");
+    return fila.map(celdaCsv).join(separadorCsv());
   }).join("\r\n");
 
   await guardarArchivo("informe-anual-" + datos.anio + ".csv", contenido, { titulo: "Informe anual " + datos.anio });
@@ -1164,15 +1172,18 @@ function confirmarEliminarMovimientos() {
 }
 
 // -------------------- UTILIDADES --------------------
+// Usa el idioma y la moneda elegidos (están en i18n.js)
 function formatearMoneda(valor) {
+  const decimales = decimalesMoneda();
   try {
-    return new Intl.NumberFormat("es-CO", {
+    return new Intl.NumberFormat(localeApp(), {
       style: "currency",
-      currency: "COP",
-      maximumFractionDigits: 0
+      currency: moneda,
+      minimumFractionDigits: decimales,
+      maximumFractionDigits: decimales
     }).format(valor);
   } catch (error) {
-    return "$ " + Math.round(valor);
+    return moneda + " " + Number(valor).toFixed(decimales);
   }
 }
 
@@ -1188,7 +1199,7 @@ function nombreMes(anioMes, conAnio) {
   const [anio, mes] = anioMes.split("-").map(Number);
   const fecha = new Date(anio, mes - 1, 1);
   const mostrarAnio = conAnio || anio !== new Date().getFullYear();
-  const texto = new Intl.DateTimeFormat("es-CO", mostrarAnio ? { month: "long", year: "numeric" } : { month: "long" }).format(fecha);
+  const texto = new Intl.DateTimeFormat(localeApp(), mostrarAnio ? { month: "long", year: "numeric" } : { month: "long" }).format(fecha);
   return conAnio ? capitalizar(texto) : texto;
 }
 
@@ -1199,7 +1210,7 @@ function nombreDia(fechaISO) {
   ayer.setDate(ayer.getDate() - 1);
   if (fechaISO === aFechaISO(ayer)) return "Ayer";
   const [anio, mes, dia] = fechaISO.split("-").map(Number);
-  return capitalizar(new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" })
+  return capitalizar(new Intl.DateTimeFormat(localeApp(), { weekday: "long", day: "numeric", month: "long" })
     .format(new Date(anio, mes - 1, dia)));
 }
 
