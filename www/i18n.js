@@ -85,26 +85,8 @@ function ajustarCamposMonto() {
 }
 
 // -------------------- TRADUCCIONES --------------------
-// La clave de cada traducción es el texto en español. Si falta una, se muestra
-
-const TRADUCCIONES = {
-  en: {
-    "Te damos la bienvenida a FinanZapp": "Welcome to FinanZapp",
-    "Elige tu idioma y tu moneda. Puedes cambiarlos cuando quieras en Configuración.":
-      "Choose your language and currency. You can change them anytime in Settings.",
-    "Idioma": "Language",
-    "Moneda": "Currency",
-    "Empezar": "Get started"
-  },
-  pt: {
-    "Te damos la bienvenida a FinanZapp": "Boas-vindas ao FinanZapp",
-    "Elige tu idioma y tu moneda. Puedes cambiarlos cuando quieras en Configuración.":
-      "Escolha seu idioma e sua moeda. Você pode alterá-los quando quiser em Configurações.",
-    "Idioma": "Idioma",
-    "Moneda": "Moeda",
-    "Empezar": "Começar"
-  }
-};
+// El diccionario TRADUCCIONES está en traducciones.js.
+// La clave de cada traducción es el texto en español. Si falta una, se muestra en español.
 
 // t("Gastado hoy") -> "Spent today" en inglés. Las {variables} se reemplazan: t("Hola {nombre}", { nombre: "Ana" })
 function t(texto, variables) {
