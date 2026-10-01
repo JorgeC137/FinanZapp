@@ -603,6 +603,7 @@ function crearItemMovimiento(m, ocultarFecha) {
 
 // -------------------- ESTADÍSTICAS --------------------
 function mostrarEstadisticas() {
+  poblarAnios();
   const delMes = movimientosDelPeriodo();
   const totales = calcularTotales(delMes);
 
@@ -710,7 +711,14 @@ function celdaCsv(valor) {
   return texto;
 }
 
-async function guardarArchivo(nombre, contenido) {
+// opciones: { titulo, tipo, base64 }. Para PDF el contenido llega en base64.
+async function guardarArchivo(nombre, contenido, opciones) {
+  const config = Object.assign({
+    titulo: "Informe " + nombrePeriodo(true),
+    tipo: "text/csv;charset=utf-8",
+    base64: false
+  }, opciones);
+
   const cap = window.Capacitor;
   const esNativo = cap && typeof cap.isNativePlatform === "function" && cap.isNativePlatform();
 
@@ -724,14 +732,11 @@ async function guardarArchivo(nombre, contenido) {
       return;
     }
     try {
-      const resultado = await Filesystem.writeFile({
-        path: nombre,
-        data: contenido,
-        directory: "CACHE",
-        encoding: "utf8"
-      });
+      const archivo = { path: nombre, data: contenido, directory: "CACHE" };
+      if (!config.base64) archivo.encoding = "utf8";   // sin encoding, Filesystem espera base64
+      const resultado = await Filesystem.writeFile(archivo);
       await Share.share({
-        title: "Informe " + nombrePeriodo(true),
+        title: config.titulo,
         url: resultado.uri,
         dialogTitle: "Guardar o enviar el informe"
       });
@@ -745,7 +750,10 @@ async function guardarArchivo(nombre, contenido) {
   }
 
   // Navegador: descarga normal
-  const blob = new Blob([contenido], { type: "text/csv;charset=utf-8" });
+  const datos = config.base64
+    ? Uint8Array.from(atob(contenido), function (c) { return c.charCodeAt(0); })
+    : contenido;
+  const blob = new Blob([datos], { type: config.tipo });
   const url = URL.createObjectURL(blob);
   const enlace = document.createElement("a");
   enlace.href = url;
@@ -755,6 +763,282 @@ async function guardarArchivo(nombre, contenido) {
   enlace.remove();
   setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   mostrarToast("✅ Informe descargado");
+}
+
+// -------------------- INFORME ANUAL --------------------
+const MESES_LARGOS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+  "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+// Llena el selector con los años que tienen movimientos (y el actual)
+function poblarAnios() {
+  const select = document.getElementById("select-anio");
+  const elegido = select.value;
+  const anios = new Set([String(new Date().getFullYear())]);
+  movimientos.forEach(function (m) { anios.add(m.fecha.slice(0, 4)); });
+  const lista = Array.from(anios).sort().reverse();
+  select.innerHTML = lista.map(function (a) { return '<option value="' + a + '">' + a + "</option>"; }).join("");
+  select.value = lista.includes(elegido) ? elegido : lista[0];
+}
+
+function datosAnuales(anio) {
+  const delAnio = movimientos
+    .filter(function (m) { return m.fecha.slice(0, 4) === anio; })
+    .sort(function (a, b) {
+      if (a.fecha === b.fecha) return a.id - b.id;
+      return a.fecha < b.fecha ? -1 : 1;
+    });
+
+  const meses = MESES_LARGOS.map(function () { return { gastos: 0, ingresos: 0 }; });
+  const categorias = {};   // { "Alimentación": [12 montos, uno por mes] }
+
+  delAnio.forEach(function (m) {
+    const i = Number(m.fecha.slice(5, 7)) - 1;
+    if (m.tipo === "gasto") {
+      meses[i].gastos += m.monto;
+      if (!categorias[m.categoria]) categorias[m.categoria] = new Array(12).fill(0);
+      categorias[m.categoria][i] += m.monto;
+    } else {
+      meses[i].ingresos += m.monto;
+    }
+  });
+
+  // Meses transcurridos: si es el año actual, hasta el mes de hoy
+  const mesesTranscurridos = anio === String(new Date().getFullYear()) ? new Date().getMonth() + 1 : 12;
+  return { anio: anio, lista: delAnio, meses: meses, categorias: categorias,
+    totales: calcularTotales(delAnio), mesesTranscurridos: mesesTranscurridos };
+}
+
+function categoriasOrdenadas(categorias) {
+  return Object.keys(categorias)
+    .map(function (c) {
+      return { nombre: c, porMes: categorias[c], total: categorias[c].reduce(function (a, b) { return a + b; }, 0) };
+    })
+    .sort(function (a, b) { return b.total - a.total; });
+}
+
+async function exportarAnualCsv() {
+  const datos = datosAnuales(document.getElementById("select-anio").value);
+  if (datos.lista.length === 0) {
+    mostrarToast("No hay movimientos en " + datos.anio);
+    return;
+  }
+
+  const filas = [];
+  filas.push(["Informe anual de FinanZapp", datos.anio]);
+  filas.push(["Generado el", formatearFecha(obtenerFechaHoy())]);
+  filas.push([]);
+
+  filas.push(["Resumen por mes"]);
+  filas.push(["Mes", "Gastos", "Ingresos", "Balance"]);
+  datos.meses.forEach(function (m, i) {
+    filas.push([MESES_LARGOS[i], m.gastos, m.ingresos, m.ingresos - m.gastos]);
+  });
+  filas.push(["Total", datos.totales.gastos, datos.totales.ingresos, datos.totales.balance]);
+  filas.push(["Promedio mensual", Math.round(datos.totales.gastos / datos.mesesTranscurridos),
+    Math.round(datos.totales.ingresos / datos.mesesTranscurridos)]);
+  filas.push([]);
+
+  filas.push(["Gastos por categoría y mes"]);
+  filas.push(["Categoría"].concat(MESES_CORTOS, ["Total"]));
+  categoriasOrdenadas(datos.categorias).forEach(function (c) {
+    filas.push([c.nombre].concat(c.porMes, [c.total]));
+  });
+  filas.push([]);
+
+  filas.push(["Detalle de movimientos"]);
+  filas.push(["Fecha", "Tipo", "Descripción", "Categoría", "Monto"]);
+  datos.lista.forEach(function (m) {
+    filas.push([formatearFecha(m.fecha), m.tipo === "gasto" ? "Gasto" : "Ingreso", m.descripcion, m.categoria, m.monto]);
+  });
+
+  const contenido = "\uFEFF" + filas.map(function (fila) {
+    return fila.map(celdaCsv).join(";");
+  }).join("\r\n");
+
+  await guardarArchivo("informe-anual-" + datos.anio + ".csv", contenido, { titulo: "Informe anual " + datos.anio });
+}
+
+// 1600000 -> "1,6M", 850000 -> "850k" (para los ejes de la gráfica)
+function abreviarMonto(valor) {
+  if (valor >= 1000000) return (valor / 1000000).toFixed(1).replace(".", ",") + "M";
+  if (valor >= 1000) return Math.round(valor / 1000) + "k";
+  return String(Math.round(valor));
+}
+
+async function exportarAnualPdf() {
+  if (!window.jspdf) {
+    mostrarToast("⚠️ Falta la librería de PDF");
+    return;
+  }
+  const datos = datosAnuales(document.getElementById("select-anio").value);
+  if (datos.lista.length === 0) {
+    mostrarToast("No hay movimientos en " + datos.anio);
+    return;
+  }
+
+  const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+  const ANCHO = 210;
+  const MARGEN = 16;
+  const AZUL = [37, 99, 235], ROJO = [220, 38, 38], VERDE = [22, 163, 74];
+  const GRIS = [100, 116, 139], OSCURO = [15, 23, 42], LINEA = [226, 232, 240];
+  const t = datos.totales;
+
+  // --- Encabezado ---
+  doc.setFillColor(...AZUL);
+  doc.rect(0, 0, ANCHO, 34, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.text("Informe anual " + datos.anio, MARGEN, 17);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text("FinanZapp, generado el " + formatearFecha(obtenerFechaHoy()), MARGEN, 26);
+
+  // --- Cuatro recuadros de resumen ---
+  const resumen = [
+    ["Gastos del año", formatearMoneda(t.gastos), ROJO],
+    ["Ingresos del año", formatearMoneda(t.ingresos), VERDE],
+    ["Balance", formatearMoneda(t.balance), t.balance < 0 ? ROJO : OSCURO],
+    ["Gasto promedio al mes", formatearMoneda(t.gastos / datos.mesesTranscurridos), OSCURO]
+  ];
+  const anchoCaja = (ANCHO - MARGEN * 2 - 9) / 4;
+  resumen.forEach(function (item, i) {
+    const x = MARGEN + i * (anchoCaja + 3);
+    doc.setDrawColor(...LINEA);
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(x, 42, anchoCaja, 22, 3, 3, "FD");
+    doc.setTextColor(...GRIS);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(item[0], x + 4, 49);
+    doc.setTextColor(...item[2]);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(item[1], x + 4, 58);
+  });
+
+  // --- Gráfica de barras: gastos e ingresos por mes ---
+  doc.setTextColor(...OSCURO);
+  doc.setFontSize(12);
+  doc.text("Gastos e ingresos por mes", MARGEN, 76);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setFillColor(...ROJO);
+  doc.rect(140, 73, 3, 3, "F");
+  doc.text("Gastos", 145, 75.6);
+  doc.setFillColor(...VERDE);
+  doc.rect(162, 73, 3, 3, "F");
+  doc.text("Ingresos", 167, 75.6);
+
+  const graficaX = MARGEN + 12;
+  const graficaArriba = 84;
+  const graficaAlto = 52;
+  const graficaAncho = ANCHO - MARGEN - graficaX;
+  const base = graficaArriba + graficaAlto;
+  const maximo = Math.max.apply(null, datos.meses.map(function (m) { return Math.max(m.gastos, m.ingresos); })) || 1;
+
+  doc.setDrawColor(...LINEA);
+  doc.setTextColor(...GRIS);
+  for (let i = 0; i <= 4; i++) {
+    const yLinea = base - (graficaAlto * i) / 4;
+    doc.line(graficaX, yLinea, graficaX + graficaAncho, yLinea);
+    doc.text(abreviarMonto((maximo * i) / 4), graficaX - 2, yLinea + 1, { align: "right" });
+  }
+
+  const anchoGrupo = graficaAncho / 12;
+  const anchoBarra = anchoGrupo * 0.32;
+  datos.meses.forEach(function (m, i) {
+    const x = graficaX + i * anchoGrupo + anchoGrupo * 0.16;
+    const altoGasto = (m.gastos / maximo) * graficaAlto;
+    const altoIngreso = (m.ingresos / maximo) * graficaAlto;
+    doc.setFillColor(...ROJO);
+    if (altoGasto > 0) doc.rect(x, base - altoGasto, anchoBarra, altoGasto, "F");
+    doc.setFillColor(...VERDE);
+    if (altoIngreso > 0) doc.rect(x + anchoBarra, base - altoIngreso, anchoBarra, altoIngreso, "F");
+    doc.text(MESES_CORTOS[i], graficaX + i * anchoGrupo + anchoGrupo / 2, base + 5, { align: "center" });
+  });
+
+  // --- Tabla por mes ---
+  let y = 152;
+  doc.setTextColor(...OSCURO);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Resumen por mes", MARGEN, y);
+  y += 5;
+
+  const columnas = [MARGEN + 2, 100, 140, ANCHO - MARGEN - 2];   // Mes (izq.) y montos (der.)
+  function filaTabla(valores, negrita, fondo, colorBalance) {
+    if (fondo) {
+      doc.setFillColor(...fondo);
+      doc.rect(MARGEN, y, ANCHO - MARGEN * 2, 6.5, "F");
+    }
+    doc.setFont("helvetica", negrita ? "bold" : "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...OSCURO);
+    doc.text(valores[0], columnas[0], y + 4.5);
+    doc.text(valores[1], columnas[1], y + 4.5, { align: "right" });
+    doc.text(valores[2], columnas[2], y + 4.5, { align: "right" });
+    doc.setTextColor(...(colorBalance || OSCURO));
+    doc.text(valores[3], columnas[3], y + 4.5, { align: "right" });
+    y += 6.5;
+  }
+
+  filaTabla(["Mes", "Gastos", "Ingresos", "Balance"], true, [241, 245, 249]);
+  datos.meses.forEach(function (m, i) {
+    const balance = m.ingresos - m.gastos;
+    filaTabla([MESES_LARGOS[i], formatearMoneda(m.gastos), formatearMoneda(m.ingresos), formatearMoneda(balance)],
+      false, i % 2 ? [248, 250, 252] : null, balance < 0 ? ROJO : OSCURO);
+  });
+  filaTabla(["Total", formatearMoneda(t.gastos), formatearMoneda(t.ingresos), formatearMoneda(t.balance)],
+    true, [241, 245, 249], t.balance < 0 ? ROJO : OSCURO);
+
+  // --- Página 2: categorías ---
+  doc.addPage();
+  y = 22;
+  doc.setTextColor(...OSCURO);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("¿En qué se fue la plata en " + datos.anio + "?", MARGEN, y);
+  y += 10;
+
+  const categorias = categoriasOrdenadas(datos.categorias);
+  categorias.forEach(function (c) {
+    if (y > 270) {
+      doc.addPage();
+      y = 22;
+    }
+    const porcentaje = t.gastos > 0 ? (c.total / t.gastos) * 100 : 0;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(...OSCURO);
+    doc.text(c.nombre, MARGEN, y);
+    doc.text(formatearMoneda(c.total) + "  (" + Math.round(porcentaje) + "%)", ANCHO - MARGEN, y, { align: "right" });
+    doc.setFillColor(...LINEA);
+    doc.roundedRect(MARGEN, y + 2.5, ANCHO - MARGEN * 2, 3, 1.5, 1.5, "F");
+    if (porcentaje > 0) {
+      doc.setFillColor(...ROJO);
+      doc.roundedRect(MARGEN, y + 2.5, Math.max(3, ((ANCHO - MARGEN * 2) * porcentaje) / 100), 3, 1.5, 1.5, "F");
+    }
+    y += 13;
+  });
+
+  // --- Pie de página en todas las hojas ---
+  const paginas = doc.getNumberOfPages();
+  for (let i = 1; i <= paginas; i++) {
+    doc.setPage(i);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...GRIS);
+    doc.text("FinanZapp", MARGEN, 290);
+    doc.text("Página " + i + " de " + paginas, ANCHO - MARGEN, 290, { align: "right" });
+  }
+
+  const base64 = doc.output("datauristring").split(",")[1];
+  await guardarArchivo("informe-anual-" + datos.anio + ".pdf", base64, {
+    titulo: "Informe anual " + datos.anio,
+    tipo: "application/pdf",
+    base64: true
+  });
 }
 
 // -------------------- CONFIGURACIÓN: PRESUPUESTO --------------------

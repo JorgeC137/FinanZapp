@@ -109,6 +109,16 @@
 
     <h3 class="seccion-subtitulo">¿En qué se fue la plata?</h3>
     <div id="lista-categorias" class="lista-categorias"></div>
+    
+    <div class="card card-anual">
+      <p class="card-label">Informe anual</p>
+      <p class="config-ayuda">Todo el año, mes por mes: en hoja de cálculo para analizarlo, o en PDF para guardarlo o imprimirlo.</p>
+      <select class="campo-input" id="select-anio" aria-label="Año del informe"></select>
+      <div class="botones-anual">
+        <button class="btn btn-secundario" onclick="exportarAnualCsv()">&#128202; Excel (CSV)</button>
+        <button class="btn btn-primario" onclick="exportarAnualPdf()">&#128196; PDF</button>
+      </div>
+    </div>
   </section>
 
   <!-- ---------- SECCIÓN: CONFIGURACIÓN ---------- -->
@@ -268,6 +278,7 @@
 <!-- ===================== TOAST ===================== -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="lib/jspdf.umd.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

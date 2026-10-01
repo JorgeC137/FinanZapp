@@ -1023,3 +1023,19 @@ body {
   text-align: center;
   color: var(--texto-secundario);
 }
+
+/* ---------- Informe anual ---------- */
+.card-anual {
+  margin-top: 20px;
+}
+
+.card-anual .config-ayuda {
+  margin-top: 6px;
+}
+
+.botones-anual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}

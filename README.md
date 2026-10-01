@@ -17,10 +17,11 @@ App para llevar el control de gastos del día a día, mes a mes, y saber en qué
 - Resumen de gastos por categoría.
 - Exportar el informe del mes en CSV (Excel o Google Sheets).
 - Tema claro y oscuro.
+- Calendario para ver un día, una semana o cualquier rango de hasta 31 días.
+- Informe anual en CSV (para analizar) y en PDF (con gráfica, para guardar o imprimir).
 
 ## Próximas mejoras
 
-- Vista por semana.
 - Gastos fijos que se repiten cada mes.
 - Límites por categoría para controlar los gastos hormiga.
 - Comparación con el mes anterior.
