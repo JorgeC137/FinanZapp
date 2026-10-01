@@ -15,7 +15,7 @@ let movimientos = [];
 let presupuestoMensual = 0;           // 0 = sin presupuesto
 let ocultarMontos = false;            // botón del ojo
 let seccionActual = "inicio";
-let mesSeleccionado = obtenerFechaHoy().slice(0, 7);   // "AAAA-MM"
+let periodo = rangoDelMes(obtenerFechaHoy().slice(0, 7));   // { inicio, fin } en AAAA-MM-DD
 let accionConfirmar = null;
 
 const CATEGORIAS = {
@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function refrescarTodo() {
   actualizarBotonOjo();
-  actualizarBarraMes();
+  actualizarBarraPeriodo();
   actualizarDashboard();
   mostrarMovimientos();
   mostrarEstadisticas();
@@ -102,32 +102,189 @@ function guardarDatos() {
   }
 }
 
-// -------------------- MES SELECCIONADO --------------------
-function cambiarMes(delta) {
-  const [anio, mes] = mesSeleccionado.split("-").map(Number);
-  const fecha = new Date(anio, mes - 1 + delta, 1);
-  const nuevoMes = fecha.getFullYear() + "-" + String(fecha.getMonth() + 1).padStart(2, "0");
+// -------------------- PERIODO SELECCIONADO --------------------
+// Un periodo es un rango de días { inicio, fin } en formato AAAA-MM-DD:
+// un mes completo, una semana, un solo día o cualquier rango de hasta 31 días.
+const MAX_DIAS_PERIODO = 31;
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
-  // No se navega a meses futuros
-  if (nuevoMes > obtenerFechaHoy().slice(0, 7)) return;
+function rangoDelMes(anioMes) {
+  const [anio, mes] = anioMes.split("-").map(Number);
+  const ultimoDia = new Date(anio, mes, 0).getDate();
+  return { inicio: anioMes + "-01", fin: anioMes + "-" + String(ultimoDia).padStart(2, "0") };
+}
 
-  mesSeleccionado = nuevoMes;
+function sumarDias(fechaISO, dias) {
+  const [anio, mes, dia] = fechaISO.split("-").map(Number);
+  return aFechaISO(new Date(anio, mes - 1, dia + dias));
+}
+
+// Días entre dos fechas, contando ambas (del 1 al 3 son 3 días)
+function diasEntre(inicio, fin) {
+  const [a1, m1, d1] = inicio.split("-").map(Number);
+  const [a2, m2, d2] = fin.split("-").map(Number);
+  return Math.round((Date.UTC(a2, m2 - 1, d2) - Date.UTC(a1, m1 - 1, d1)) / 86400000) + 1;
+}
+
+function esMesCompleto(p) {
+  const mes = p.inicio.slice(0, 7);
+  return p.inicio === mes + "-01" && p.fin === rangoDelMes(mes).fin;
+}
+
+function periodoIncluyeHoy() {
+  const hoy = obtenerFechaHoy();
+  return periodo.inicio <= hoy && hoy <= periodo.fin;
+}
+
+function movimientosDelPeriodo() {
+  return movimientos.filter(function (m) {
+    return m.fecha >= periodo.inicio && m.fecha <= periodo.fin;
+  });
+}
+
+// El periodo anterior (-1) o siguiente (1), con la misma duración
+function periodoVecino(p, delta) {
+  if (esMesCompleto(p)) {
+    const [anio, mes] = p.inicio.split("-").map(Number);
+    return rangoDelMes(aFechaISO(new Date(anio, mes - 1 + delta, 1)).slice(0, 7));
+  }
+  const dias = diasEntre(p.inicio, p.fin);
+  return { inicio: sumarDias(p.inicio, delta * dias), fin: sumarDias(p.fin, delta * dias) };
+}
+
+function moverPeriodo(delta) {
+  const nuevo = periodoVecino(periodo, delta);
+  if (nuevo.inicio > obtenerFechaHoy()) return;   // no se navega al futuro
+  periodo = nuevo;
   refrescarTodo();
 }
 
-function actualizarBarraMes() {
-  document.getElementById("mes-actual-texto").textContent = nombreMes(mesSeleccionado, true);
-  document.getElementById("btn-mes-siguiente").disabled = esMesActual();
+function actualizarBarraPeriodo() {
+  ponerTexto("periodo-texto", nombrePeriodo(true));
+  document.getElementById("btn-periodo-siguiente").disabled = periodoVecino(periodo, 1).inicio > obtenerFechaHoy();
 }
 
-function esMesActual() {
-  return mesSeleccionado === obtenerFechaHoy().slice(0, 7);
+// "2026-10-01" -> "1 oct" (con el año si no es el actual)
+function fechaCorta(fechaISO) {
+  const [anio, mes, dia] = fechaISO.split("-").map(Number);
+  return dia + " " + MESES_CORTOS[mes - 1] + (anio !== new Date().getFullYear() ? " " + anio : "");
 }
 
-function movimientosDelMes() {
-  return movimientos.filter(function (m) {
-    return m.fecha.slice(0, 7) === mesSeleccionado;
-  });
+function nombrePeriodo(largo) {
+  if (esMesCompleto(periodo)) return nombreMes(periodo.inicio.slice(0, 7), largo);
+  if (periodo.inicio === periodo.fin) return largo ? nombreDia(periodo.inicio) : fechaCorta(periodo.inicio);
+  return fechaCorta(periodo.inicio) + " – " + fechaCorta(periodo.fin);
+}
+
+function textoGastado() {
+  if (esMesCompleto(periodo)) return "Gastado en " + nombreMes(periodo.inicio.slice(0, 7), false);
+  if (periodo.inicio === periodo.fin) {
+    return periodo.inicio === obtenerFechaHoy() ? "Gastado hoy" : "Gastado el " + fechaCorta(periodo.inicio);
+  }
+  return "Gastado del " + fechaCorta(periodo.inicio) + " al " + fechaCorta(periodo.fin);
+}
+
+// Presupuesto mensual completo, o la parte proporcional a los días elegidos
+function presupuestoDelPeriodo() {
+  if (esMesCompleto(periodo)) return presupuestoMensual;
+  return Math.round((presupuestoMensual / 30) * diasEntre(periodo.inicio, periodo.fin));
+}
+
+// -------------------- CALENDARIO --------------------
+let calMes = "";            // mes que se ve en el calendario (AAAA-MM)
+let seleccion = null;       // { inicio, fin } mientras eliges
+let esperandoFin = false;   // true después del primer toque
+
+function abrirCalendario() {
+  const hoy = obtenerFechaHoy();
+  seleccion = { inicio: periodo.inicio, fin: periodo.fin };
+  esperandoFin = false;
+  calMes = (periodo.fin > hoy ? hoy : periodo.fin).slice(0, 7);
+  dibujarCalendario();
+  document.getElementById("modal-calendario").classList.add("abierto");
+}
+
+function cerrarCalendario() {
+  document.getElementById("modal-calendario").classList.remove("abierto");
+}
+
+function moverCalendario(delta) {
+  const [anio, mes] = calMes.split("-").map(Number);
+  const nuevo = aFechaISO(new Date(anio, mes - 1 + delta, 1)).slice(0, 7);
+  if (nuevo > obtenerFechaHoy().slice(0, 7)) return;
+  calMes = nuevo;
+  dibujarCalendario();
+}
+
+// Primer toque: elige un día. Segundo toque: cierra el rango.
+function tocarDia(fecha) {
+  if (!esperandoFin) {
+    seleccion = { inicio: fecha, fin: fecha };
+    esperandoFin = true;
+  } else {
+    const inicio = fecha < seleccion.inicio ? fecha : seleccion.inicio;
+    const fin = fecha < seleccion.inicio ? seleccion.inicio : fecha;
+    if (diasEntre(inicio, fin) > MAX_DIAS_PERIODO) {
+      mostrarToast("Puedes elegir máximo " + MAX_DIAS_PERIODO + " días");
+      seleccion = { inicio: fecha, fin: fecha };
+      return dibujarCalendario();
+    }
+    seleccion = { inicio: inicio, fin: fin };
+    esperandoFin = false;
+  }
+  dibujarCalendario();
+}
+
+function dibujarCalendario() {
+  const [anio, mes] = calMes.split("-").map(Number);
+  const hoy = obtenerFechaHoy();
+  ponerTexto("cal-mes-texto", nombreMes(calMes, true));
+  document.getElementById("cal-siguiente").disabled = calMes >= hoy.slice(0, 7);
+
+  const grilla = document.getElementById("cal-dias");
+  grilla.innerHTML = "";
+  const espacios = (new Date(anio, mes - 1, 1).getDay() + 6) % 7;   // la semana empieza el lunes
+  for (let i = 0; i < espacios; i++) grilla.appendChild(document.createElement("span"));
+
+  const totalDias = new Date(anio, mes, 0).getDate();
+  for (let dia = 1; dia <= totalDias; dia++) {
+    const fecha = calMes + "-" + String(dia).padStart(2, "0");
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "cal-dia";
+    boton.textContent = dia;
+    boton.disabled = fecha > hoy;
+    if (fecha === hoy) boton.classList.add("es-hoy");
+    if (fecha >= seleccion.inicio && fecha <= seleccion.fin) boton.classList.add("en-rango");
+    if (fecha === seleccion.inicio || fecha === seleccion.fin) boton.classList.add("extremo");
+    boton.onclick = function () { tocarDia(fecha); };
+    grilla.appendChild(boton);
+  }
+
+  const dias = diasEntre(seleccion.inicio, seleccion.fin);
+  ponerTexto("cal-resumen", dias === 1
+    ? nombreDia(seleccion.inicio) + (esperandoFin ? ". Toca otro día para elegir un rango." : "")
+    : fechaCorta(seleccion.inicio) + " – " + fechaCorta(seleccion.fin) + " (" + dias + " días)");
+}
+
+function aplicarCalendario() {
+  periodo = { inicio: seleccion.inicio, fin: seleccion.fin };
+  cerrarCalendario();
+  refrescarTodo();
+}
+
+function atajoPeriodo(tipo) {
+  const hoy = obtenerFechaHoy();
+  if (tipo === "hoy") periodo = { inicio: hoy, fin: hoy };
+  if (tipo === "semana") {
+    const [anio, mes, dia] = hoy.split("-").map(Number);
+    const lunes = sumarDias(hoy, -((new Date(anio, mes - 1, dia).getDay() + 6) % 7));
+    periodo = { inicio: lunes, fin: sumarDias(lunes, 6) };
+  }
+  if (tipo === "mes") periodo = rangoDelMes(hoy.slice(0, 7));
+  if (tipo === "mes-anterior") periodo = periodoVecino(rangoDelMes(hoy.slice(0, 7)), -1);
+  cerrarCalendario();
+  refrescarTodo();
 }
 
 // -------------------- NAVEGACIÓN --------------------
@@ -184,7 +341,7 @@ function abrirFormulario(tipo) {
   document.getElementById("btn-eliminar-movimiento").hidden = true;
 
   // Si estás viendo un mes anterior, la fecha sugerida queda dentro de ese mes
-  document.getElementById("input-fecha").value = esMesActual() ? obtenerFechaHoy() : mesSeleccionado + "-01";
+  document.getElementById("input-fecha").value = periodoIncluyeHoy() ? obtenerFechaHoy() : periodo.fin;
 
   document.getElementById("modal-formulario").classList.add("abierto");
   setTimeout(function () { document.getElementById("input-monto").focus(); }, 250);
@@ -267,7 +424,8 @@ function guardarMovimiento(evento) {
   }
 
   guardarDatos();
-  mesSeleccionado = fecha.slice(0, 7);   // muestra el mes donde quedó el registro
+  // Si el registro quedó fuera de los días que estás viendo, salta a su mes
+  if (fecha < periodo.inicio || fecha > periodo.fin) periodo = rangoDelMes(fecha.slice(0, 7));
   refrescarTodo();
   cerrarFormulario();
 
@@ -306,9 +464,9 @@ function calcularTotales(lista) {
 }
 
 function diasTranscurridos() {
-  if (esMesActual()) return new Date().getDate();
-  const [anio, mes] = mesSeleccionado.split("-").map(Number);
-  return new Date(anio, mes, 0).getDate();   // días del mes
+  const hoy = obtenerFechaHoy();
+  const fin = periodo.fin < hoy ? periodo.fin : hoy;
+  return Math.max(1, diasEntre(periodo.inicio, fin));
 }
 
 function gastosPorCategoria(lista) {
@@ -332,11 +490,12 @@ function ordenarRecientes(lista) {
 
 // -------------------- DASHBOARD (INICIO) --------------------
 function actualizarDashboard() {
-  const delMes = movimientosDelMes();
-  const totales = calcularTotales(delMes);
+  const delPeriodo = movimientosDelPeriodo();
+  const totales = calcularTotales(delPeriodo);
+  const sufijo = esMesCompleto(periodo) ? "del mes" : "del periodo";
 
-  document.getElementById("etiqueta-gastado").textContent = "Gastado en " + nombreMes(mesSeleccionado, false);
-  document.getElementById("total-gastado").textContent = formatearMoneda(totales.gastos);
+  ponerTexto("etiqueta-gastado", textoGastado());
+  ponerTexto("total-gastado", formatearMoneda(totales.gastos));
 
   // Línea secundaria: presupuesto, balance o nada (todo es opcional)
   const linea = document.getElementById("linea-resumen");
@@ -344,25 +503,26 @@ function actualizarDashboard() {
   const relleno = document.getElementById("barra-presupuesto-relleno");
 
   if (presupuestoMensual > 0) {
-    const restante = presupuestoMensual - totales.gastos;
-    const porcentaje = Math.min(100, (totales.gastos / presupuestoMensual) * 100);
+    const presupuesto = presupuestoDelPeriodo();
+    const restante = presupuesto - totales.gastos;
     barra.hidden = false;
-    relleno.style.width = porcentaje + "%";
+    relleno.style.width = Math.min(100, (totales.gastos / presupuesto) * 100) + "%";
     barra.classList.toggle("excedido", restante < 0);
     linea.textContent = restante >= 0
-      ? "Te quedan " + formatearMoneda(restante) + " de " + formatearMoneda(presupuestoMensual)
+      ? "Te quedan " + formatearMoneda(restante) + " de " + formatearMoneda(presupuesto)
       : "Te pasaste " + formatearMoneda(-restante) + " del presupuesto";
   } else if (totales.ingresos > 0) {
     barra.hidden = true;
-    linea.textContent = "Balance del mes: " + privado(formatearMoneda(totales.balance));
+    linea.textContent = "Balance " + sufijo + ": " + privado(formatearMoneda(totales.balance));
   } else {
     barra.hidden = true;
     linea.textContent = "Anota cada gasto el día que lo hagas";
   }
+
   // Tarjetas del día: gastos en rojo, ingresos en verde
   const promedioDiario = totales.gastos / diasTranscurridos();
-  if (esMesActual()) {
-    const hoy = calcularTotales(delMes.filter(function (m) { return m.fecha === obtenerFechaHoy(); }));
+  if (periodoIncluyeHoy()) {
+    const hoy = calcularTotales(delPeriodo.filter(function (m) { return m.fecha === obtenerFechaHoy(); }));
     ponerTexto("etiqueta-dia-gastos", "Gastado hoy");
     ponerTexto("valor-dia-gastos", conSigno(hoy.gastos, "-"));
     ponerTexto("subdato-dia-gastos", "Promedio diario: " + formatearMoneda(promedioDiario));
@@ -370,20 +530,21 @@ function actualizarDashboard() {
     ponerTexto("valor-dia-ingresos", privado(conSigno(hoy.ingresos, "+")));
     ponerTexto("subdato-dia-ingresos", "Balance de hoy: " + privado(formatearMoneda(hoy.balance)));
   } else {
-    // En meses anteriores no hay "hoy": se muestra el resumen del mes
+    // Si los días elegidos no incluyen hoy, se muestra el resumen de esos días
     ponerTexto("etiqueta-dia-gastos", "Promedio diario");
     ponerTexto("valor-dia-gastos", conSigno(promedioDiario, "-"));
-    ponerTexto("subdato-dia-gastos", "Día con más gasto: " + formatearMoneda(mayorGastoDiario(delMes)));
-    ponerTexto("etiqueta-dia-ingresos", "Ingresos del mes");
+    ponerTexto("subdato-dia-gastos", "Día con más gasto: " + formatearMoneda(mayorGastoDiario(delPeriodo)));
+    ponerTexto("etiqueta-dia-ingresos", "Ingresos " + sufijo);
     ponerTexto("valor-dia-ingresos", privado(conSigno(totales.ingresos, "+")));
-    ponerTexto("subdato-dia-ingresos", "Balance del mes: " + privado(formatearMoneda(totales.balance)));
+    ponerTexto("subdato-dia-ingresos", "Balance " + sufijo + ": " + privado(formatearMoneda(totales.balance)));
   }
-    renderizarLista("lista-movimientos-recientes", ordenarRecientes(delMes).slice(0, 5), false);
+
+  renderizarLista("lista-movimientos-recientes", ordenarRecientes(delPeriodo).slice(0, 5), false);
 }
 
 // -------------------- MOVIMIENTOS --------------------
 function mostrarMovimientos() {
-  renderizarLista("lista-movimientos-todos", ordenarRecientes(movimientosDelMes()), true);
+  renderizarLista("lista-movimientos-todos", ordenarRecientes(movimientosDelPeriodo()), true);
 }
 
 function renderizarLista(idContenedor, lista, agruparPorDia) {
@@ -395,7 +556,7 @@ function renderizarLista(idContenedor, lista, agruparPorDia) {
     contenedor.innerHTML =
       '<div class="estado-vacio">' +
       '<span class="estado-vacio-icono">📋</span>' +
-      '<p class="estado-vacio-titulo">Sin movimientos en ' + escaparTexto(nombreMes(mesSeleccionado, false)) + '</p>' +
+      '<p class="estado-vacio-titulo">Sin movimientos en estos días</p>' +
       '<p class="estado-vacio-subtitulo">Toca “Agregar gasto” para anotar el primero</p>' +
       "</div>";
     return;
@@ -442,14 +603,14 @@ function crearItemMovimiento(m, ocultarFecha) {
 
 // -------------------- ESTADÍSTICAS --------------------
 function mostrarEstadisticas() {
-  const delMes = movimientosDelMes();
+  const delMes = movimientosDelPeriodo();
   const totales = calcularTotales(delMes);
 
   document.getElementById("stat-ingresos").textContent = privado(formatearMoneda(totales.ingresos));
   document.getElementById("stat-gastos").textContent = formatearMoneda(totales.gastos);
   document.getElementById("stat-saldo").textContent = privado(formatearMoneda(totales.balance));
   document.getElementById("stat-cantidad").textContent = delMes.length;
-  document.getElementById("btn-exportar").textContent = "Descargar informe de " + nombreMes(mesSeleccionado, false);
+  ponerTexto("btn-exportar", esMesCompleto(periodo) ? "Descargar informe de " + nombrePeriodo(false) : "Descargar informe de estos días");
 
   const porCategoria = gastosPorCategoria(delMes);
   const contenedor = document.getElementById("lista-categorias");
@@ -484,13 +645,13 @@ function mostrarEstadisticas() {
 
 // -------------------- EXPORTAR INFORME DEL MES (CSV) --------------------
 async function exportarInforme() {
-  const delMes = movimientosDelMes().sort(function (a, b) {
+  const delMes = movimientosDelPeriodo().sort(function (a, b) {
     if (a.fecha === b.fecha) return a.id - b.id;
     return a.fecha < b.fecha ? -1 : 1;
   });
 
   if (delMes.length === 0) {
-    mostrarToast("No hay movimientos en este mes");
+    mostrarToast("No hay movimientos en estos días");
     return;
   }
 
@@ -498,7 +659,7 @@ async function exportarInforme() {
   const porCategoria = gastosPorCategoria(delMes);
   const filas = [];
 
-  filas.push(["Informe de gastos", nombreMes(mesSeleccionado, true)]);
+  filas.push(["Informe de gastos", nombrePeriodo(true)]);
   filas.push(["Generado el", formatearFecha(obtenerFechaHoy())]);
   filas.push([]);
   filas.push(["Fecha", "Descripción", "Categoría", "Gasto", "Ingreso"]);
@@ -524,8 +685,8 @@ async function exportarInforme() {
   filas.push(["Balance del mes", totales.balance]);
   filas.push(["Promedio de gasto diario", Math.round(totales.gastos / diasTranscurridos())]);
   if (presupuestoMensual > 0) {
-    filas.push(["Presupuesto mensual", presupuestoMensual]);
-    filas.push(["Diferencia con el presupuesto", presupuestoMensual - totales.gastos]);
+    filas.push(["Presupuesto " + (esMesCompleto(periodo) ? "del mes" : "proporcional de estos días"), presupuestoDelPeriodo()]);
+    filas.push(["Diferencia con el presupuesto", presupuestoDelPeriodo() - totales.gastos]);
   }
 
   // Punto y coma: es el separador que espera Excel en español (Colombia).
@@ -534,7 +695,10 @@ async function exportarInforme() {
     return fila.map(celdaCsv).join(";");
   }).join("\r\n");
 
-  await guardarArchivo("gastos-" + mesSeleccionado + ".csv", contenido);
+  const nombreArchivo = esMesCompleto(periodo)
+    ? "gastos-" + periodo.inicio.slice(0, 7)
+    : "gastos-" + periodo.inicio + "_a_" + periodo.fin;
+  await guardarArchivo(nombreArchivo + ".csv", contenido);
 }
 
 function celdaCsv(valor) {
@@ -567,7 +731,7 @@ async function guardarArchivo(nombre, contenido) {
         encoding: "utf8"
       });
       await Share.share({
-        title: "Informe " + nombreMes(mesSeleccionado, true),
+        title: "Informe " + nombrePeriodo(true),
         url: resultado.uri,
         dialogTitle: "Guardar o enviar el informe"
       });

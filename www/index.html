@@ -16,9 +16,12 @@
 
 <!-- ===================== SELECTOR DE MES ===================== -->
 <div class="barra-mes" id="barra-mes">
-  <button class="btn-mes" id="btn-mes-anterior" onclick="cambiarMes(-1)" aria-label="Mes anterior">&#8249;</button>
-  <span class="mes-texto" id="mes-actual-texto">Mes</span>
-  <button class="btn-mes" id="btn-mes-siguiente" onclick="cambiarMes(1)" aria-label="Mes siguiente">&#8250;</button>
+  <button class="btn-mes" onclick="moverPeriodo(-1)" aria-label="Periodo anterior">&#8249;</button>
+  <button class="btn-periodo" onclick="abrirCalendario()" aria-label="Elegir días en el calendario">
+    <span id="periodo-texto">Mes</span>
+    <span class="btn-periodo-icono" aria-hidden="true">&#128197;</span>
+  </button>
+  <button class="btn-mes" id="btn-periodo-siguiente" onclick="moverPeriodo(1)" aria-label="Periodo siguiente">&#8250;</button>
 </div>
 
 <!-- ===================== CONTENIDO PRINCIPAL ===================== -->
@@ -61,7 +64,7 @@
     </div>
 
     <div class="seccion-header-row">
-      <h2 class="seccion-subtitulo">Últimos del mes</h2>
+      <h2 class="seccion-subtitulo">Últimos movimientos</h2>
       <button class="btn-link" onclick="mostrarSeccion('movimientos')">Ver todos</button>
     </div>
 
@@ -77,7 +80,7 @@
 
   <!-- ---------- SECCIÓN: ESTADÍSTICAS ---------- -->
   <section id="seccion-estadisticas" class="seccion">
-    <h2 class="seccion-titulo">Resumen del mes</h2>
+    <h2 class="seccion-titulo">Resumen</h2>
 
     <div class="resumen-grid">
       <div class="card card-resumen card-gastos">
@@ -101,7 +104,7 @@
       </div>
     </div>
 
-    <button class="btn btn-primario" id="btn-exportar" onclick="exportarInforme()">Descargar informe del mes</button>
+    <button class="btn btn-primario" id="btn-exportar" onclick="exportarInforme()">Descargar informe </button>
     <p class="nota-exportar">Se genera un archivo .csv que abre en Excel o Google Sheets.</p>
 
     <h3 class="seccion-subtitulo">¿En qué se fue la plata?</h3>
@@ -209,6 +212,44 @@
       </div>
       <button type="button" class="btn-eliminar" id="btn-eliminar-movimiento" onclick="pedirEliminarMovimiento()" hidden>Eliminar este registro</button>
     </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: CALENDARIO ===================== -->
+<div class="modal-overlay" id="modal-calendario">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-titulo">Elige los días</h3>
+        <p class="modal-subtitulo">Toca un día, o dos para marcar un rango (máximo 31 días)</p>
+      </div>
+      <button class="modal-cerrar" onclick="cerrarCalendario()" aria-label="Cerrar">&times;</button>
+    </div>
+
+    <div class="cal-atajos">
+      <button class="cal-atajo" onclick="atajoPeriodo('hoy')">Hoy</button>
+      <button class="cal-atajo" onclick="atajoPeriodo('semana')">Esta semana</button>
+      <button class="cal-atajo" onclick="atajoPeriodo('mes')">Este mes</button>
+      <button class="cal-atajo" onclick="atajoPeriodo('mes-anterior')">Mes anterior</button>
+    </div>
+
+    <div class="cal-encabezado">
+      <button class="btn-mes" onclick="moverCalendario(-1)" aria-label="Mes anterior">&#8249;</button>
+      <span class="cal-mes-texto" id="cal-mes-texto">Mes</span>
+      <button class="btn-mes" id="cal-siguiente" onclick="moverCalendario(1)" aria-label="Mes siguiente">&#8250;</button>
+    </div>
+
+    <div class="cal-semana">
+      <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+    </div>
+    <div class="cal-dias" id="cal-dias"></div>
+
+    <p class="cal-resumen" id="cal-resumen"></p>
+
+    <div class="modal-botones">
+      <button class="btn btn-secundario" onclick="cerrarCalendario()">Cancelar</button>
+      <button class="btn btn-primario" onclick="aplicarCalendario()">Ver estos días</button>
+    </div>
   </div>
 </div>
 

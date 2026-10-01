@@ -913,3 +913,113 @@ body {
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
+
+/* ---------- Selector de periodo y calendario ---------- */
+.btn-periodo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--texto);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-periodo:hover {
+  background: var(--fondo-tarjeta);
+}
+
+.btn-periodo-icono {
+  font-size: 15px;
+}
+
+.cal-atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.cal-atajo {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--borde);
+  background: var(--fondo);
+  color: var(--texto);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cal-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cal-mes-texto {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cal-semana,
+.cal-dias {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  text-align: center;
+}
+
+.cal-semana span {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--texto-secundario);
+  padding-bottom: 4px;
+}
+
+.cal-dia {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--texto);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cal-dia:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.cal-dia.es-hoy {
+  outline: 2px solid var(--azul);
+  outline-offset: -2px;
+}
+
+.cal-dia.en-rango {
+  background: rgba(37, 99, 235, 0.15);
+}
+
+.cal-dia.extremo {
+  background: var(--azul);
+  color: #fff;
+}
+
+.cal-resumen {
+  margin: 12px 0 0 0;
+  min-height: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--texto-secundario);
+}
