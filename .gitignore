@@ -1,0 +1,15 @@
+# Dependencias (se reinstalan con npm install)
+node_modules/
+
+# Android: archivos compilados y configuración local
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+*.apk
+
+# Editor y sistema
+.idea/
+.vscode/
+Thumbs.db

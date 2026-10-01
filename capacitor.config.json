@@ -1,0 +1,8 @@
+{
+  "appId": "com.finanzapp.app",
+  "appName": "FinanZapp",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

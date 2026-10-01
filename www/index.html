@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>FinanApp</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header class="app-header">
+  <p class="greeting">Hola &#128075;</p>
+  <h1 class="app-title">Mis Finanzas</h1>
+</header>
+
+<!-- ===================== SELECTOR DE MES ===================== -->
+<div class="barra-mes" id="barra-mes">
+  <button class="btn-mes" id="btn-mes-anterior" onclick="cambiarMes(-1)" aria-label="Mes anterior">&#8249;</button>
+  <span class="mes-texto" id="mes-actual-texto">Mes</span>
+  <button class="btn-mes" id="btn-mes-siguiente" onclick="cambiarMes(1)" aria-label="Mes siguiente">&#8250;</button>
+</div>
+
+<!-- ===================== CONTENIDO PRINCIPAL ===================== -->
+<main class="app-content">
+
+  <!-- ---------- SECCIÓN: INICIO ---------- -->
+  <section id="seccion-inicio" class="seccion activa">
+
+        <div class="card card-saldo">
+      <div class="card-saldo-encabezado">
+        <p class="card-label etiqueta-gastado" id="etiqueta-gastado">Gastado este mes</p>
+        <button class="btn-ojo" id="btn-ojo" onclick="alternarMontos()" aria-label="Ocultar montos">
+          <svg id="icono-ojo-abierto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg id="icono-ojo-cerrado" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </button>
+      </div>
+      <p class="card-saldo-valor" id="total-gastado">$0</p>
+      <div class="barra-presupuesto" id="barra-presupuesto" hidden>
+        <div class="barra-presupuesto-relleno" id="barra-presupuesto-relleno"></div>
+      </div>
+      <p class="linea-resumen" id="linea-resumen"></p>
+    </div>
+
+    <div class="resumen-grid">
+      <div class="card card-resumen card-dia-gastos">
+        <p class="card-label" id="etiqueta-dia-gastos">Gastado hoy</p>
+        <p class="card-resumen-valor" id="valor-dia-gastos">$0</p>
+        <p class="card-subdato" id="subdato-dia-gastos"></p>
+      </div>
+      <div class="card card-resumen card-dia-ingresos" onclick="abrirFormulario('ingreso')">
+        <p class="card-label"><span id="etiqueta-dia-ingresos">Ingresos hoy</span> <span class="card-label-nota">(opcional)</span></p>
+        <p class="card-resumen-valor" id="valor-dia-ingresos">$0</p>
+        <p class="card-subdato" id="subdato-dia-ingresos"></p>
+      </div>
+    </div>
+
+    <div class="acciones-rapidas">
+      <button class="btn btn-gasto" onclick="abrirFormulario('gasto')">&#128184; Agregar gasto</button>
+      <button class="btn btn-secundario" onclick="abrirFormulario('ingreso')">&#128176; Agregar ingreso</button>
+    </div>
+
+    <div class="seccion-header-row">
+      <h2 class="seccion-subtitulo">Últimos del mes</h2>
+      <button class="btn-link" onclick="mostrarSeccion('movimientos')">Ver todos</button>
+    </div>
+
+    <div id="lista-movimientos-recientes" class="lista-movimientos"></div>
+  </section>
+
+  <!-- ---------- SECCIÓN: MOVIMIENTOS ---------- -->
+  <section id="seccion-movimientos" class="seccion">
+    <h2 class="seccion-titulo">Movimientos</h2>
+    <p class="seccion-descripcion">Toca un registro para editarlo o eliminarlo</p>
+    <div id="lista-movimientos-todos" class="lista-movimientos"></div>
+  </section>
+
+  <!-- ---------- SECCIÓN: ESTADÍSTICAS ---------- -->
+  <section id="seccion-estadisticas" class="seccion">
+    <h2 class="seccion-titulo">Resumen del mes</h2>
+
+    <div class="resumen-grid">
+      <div class="card card-resumen card-gastos">
+        <p class="card-label">Gastos</p>
+        <p class="card-resumen-valor" id="stat-gastos">$0</p>
+      </div>
+      <div class="card card-resumen card-ingresos">
+        <p class="card-label">Ingresos</p>
+        <p class="card-resumen-valor" id="stat-ingresos">$0</p>
+      </div>
+    </div>
+
+    <div class="resumen-grid">
+      <div class="card card-resumen">
+        <p class="card-label">Balance</p>
+        <p class="card-resumen-valor" id="stat-saldo">$0</p>
+      </div>
+      <div class="card card-resumen">
+        <p class="card-label">Movimientos</p>
+        <p class="card-resumen-valor" id="stat-cantidad">0</p>
+      </div>
+    </div>
+
+    <button class="btn btn-primario" id="btn-exportar" onclick="exportarInforme()">Descargar informe del mes</button>
+    <p class="nota-exportar">Se genera un archivo .csv que abre en Excel o Google Sheets.</p>
+
+    <h3 class="seccion-subtitulo">¿En qué se fue la plata?</h3>
+    <div id="lista-categorias" class="lista-categorias"></div>
+  </section>
+
+  <!-- ---------- SECCIÓN: CONFIGURACIÓN ---------- -->
+  <section id="seccion-configuracion" class="seccion">
+    <h2 class="seccion-titulo">Configuración</h2>
+
+    <div class="card card-config">
+      <p class="card-label">Presupuesto mensual (opcional)</p>
+      <p class="config-ayuda">Si lo pones, el inicio te muestra cuánto te queda cada mes. Déjalo vacío para solo llevar tus gastos.</p>
+      <div class="fila-presupuesto">
+        <input class="campo-input" type="number" id="input-presupuesto" placeholder="Ej. 1500000" min="0" step="1" inputmode="numeric">
+        <button class="btn btn-primario btn-compacto" onclick="guardarPresupuesto()">Guardar</button>
+      </div>
+    </div>
+
+    <div class="card card-config">
+      <p class="card-label">Tema</p>
+      <label class="opcion-radio">
+        <input type="radio" name="tema" value="claro" id="tema-claro" onchange="cambiarTema('claro')">
+        <span>Claro</span>
+      </label>
+      <label class="opcion-radio">
+        <input type="radio" name="tema" value="oscuro" id="tema-oscuro" onchange="cambiarTema('oscuro')">
+        <span>Oscuro</span>
+      </label>
+      <label class="opcion-radio">
+        <input type="radio" name="tema" value="sistema" id="tema-sistema" onchange="cambiarTema('sistema')">
+        <span>Sistema</span>
+      </label>
+    </div>
+
+    <div class="card card-config">
+      <button class="btn btn-peligro" onclick="confirmarEliminarMovimientos()">&#128465;&#65039; Eliminar todos los movimientos</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== NAVEGACIÓN INFERIOR ===================== -->
+<nav class="nav-inferior">
+  <button class="nav-item activo" id="nav-inicio" onclick="mostrarSeccion('inicio')">
+    <span class="nav-icono">&#127968;</span>
+    <span class="nav-label">Inicio</span>
+  </button>
+  <button class="nav-item" id="nav-movimientos" onclick="mostrarSeccion('movimientos')">
+    <span class="nav-icono">&#128203;</span>
+    <span class="nav-label">Movimientos</span>
+  </button>
+  <button class="nav-item" id="nav-estadisticas" onclick="mostrarSeccion('estadisticas')">
+    <span class="nav-icono">&#128202;</span>
+    <span class="nav-label">Resumen</span>
+  </button>
+  <button class="nav-item" id="nav-configuracion" onclick="mostrarSeccion('configuracion')">
+    <span class="nav-icono">&#9881;&#65039;</span>
+    <span class="nav-label">Configuración</span>
+  </button>
+</nav>
+
+<!-- ===================== BOTÓN FLOTANTE ===================== -->
+<button class="fab" id="btn-fab" onclick="toggleMenuFab()" aria-label="Agregar movimiento">+</button>
+
+<div class="fab-menu" id="fab-menu">
+  <button class="fab-menu-item" onclick="toggleMenuFab(); abrirFormulario('gasto')">&#128184; Agregar gasto</button>
+  <button class="fab-menu-item" onclick="toggleMenuFab(); abrirFormulario('ingreso')">&#128176; Agregar ingreso</button>
+</div>
+<div class="fab-overlay" id="fab-overlay" onclick="toggleMenuFab()"></div>
+
+<!-- ===================== MODAL: FORMULARIO DE MOVIMIENTO ===================== -->
+<div class="modal-overlay" id="modal-formulario">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-titulo" id="modal-titulo">Agregar gasto</h3>
+        <p class="modal-subtitulo" id="modal-subtitulo"></p>
+      </div>
+      <button class="modal-cerrar" onclick="cerrarFormulario()" aria-label="Cerrar">&times;</button>
+    </div>
+
+    <form id="form-movimiento" onsubmit="guardarMovimiento(event)" novalidate>
+      <input type="hidden" id="input-tipo" value="gasto">
+      <input type="hidden" id="input-id" value="">
+
+      <label class="campo-label" for="input-monto">Monto</label>
+      <input class="campo-input campo-monto" type="number" id="input-monto" placeholder="0" min="1" step="1" inputmode="numeric">
+      <p class="campo-error" id="error-monto"></p>
+
+      <label class="campo-label" for="input-categoria">¿En qué fue?</label>
+      <select class="campo-input" id="input-categoria"></select>
+      <p class="campo-error" id="error-categoria"></p>
+
+      <label class="campo-label" for="input-descripcion">Detalle (opcional)</label>
+      <input class="campo-input" type="text" id="input-descripcion" placeholder="Ej. Almuerzo, bus, recarga" maxlength="80">
+
+<label class="campo-label" for="input-fecha">Fecha</label>
+      <input class="campo-input" type="date" id="input-fecha">
+      <p class="campo-error" id="error-fecha"></p>
+
+      <div class="modal-botones">
+        <button type="button" class="btn btn-secundario" onclick="cerrarFormulario()">Cancelar</button>
+        <button type="submit" class="btn btn-primario" id="btn-guardar-movimiento">Guardar gasto</button>
+      </div>
+      <button type="button" class="btn-eliminar" id="btn-eliminar-movimiento" onclick="pedirEliminarMovimiento()" hidden>Eliminar este registro</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: CONFIRMAR ===================== -->
+<div class="modal-overlay" id="modal-confirmar">
+  <div class="modal modal-pequeno">
+    <h3 class="modal-titulo" id="confirmar-titulo">¿Estás seguro?</h3>
+    <p class="modal-texto" id="confirmar-texto"></p>
+    <div class="modal-botones">
+      <button class="btn btn-secundario" onclick="cerrarModalConfirmar()">Cancelar</button>
+      <button class="btn btn-peligro" id="btn-confirmar-accion" onclick="ejecutarConfirmacion()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,915 @@
+/* ============================================================
+   FinanApp — Hoja de estilos
+   ============================================================ */
+
+:root {
+  --azul: #2563EB;
+  --azul-oscuro: #1D4ED8;
+  --verde: #16A34A;
+  --rojo: #DC2626;
+
+  --fondo: #F8FAFC;
+  --fondo-tarjeta: #FFFFFF;
+  --fondo-nav: #FFFFFF;
+  --texto: #0F172A;
+  --texto-secundario: #64748B;
+  --borde: #E2E8F0;
+
+  --sombra: 0 4px 14px rgba(15, 23, 42, 0.08);
+  --sombra-fuerte: 0 10px 30px rgba(15, 23, 42, 0.18);
+
+  --radio: 18px;
+  --radio-chico: 12px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+body.tema-oscuro {
+  --fondo: #0B1220;
+  --fondo-tarjeta: #131B2C;
+  --fondo-nav: #101827;
+  --texto: #F1F5F9;
+  --texto-secundario: #94A3B8;
+  --borde: #223047;
+  --sombra: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --sombra-fuerte: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  transition: background 0.25s ease, color 0.25s ease;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ===================== HEADER ===================== */
+.app-header {
+  padding: 20px 20px 8px 20px;
+}
+
+.greeting {
+  margin: 0;
+  font-size: 15px;
+  color: var(--texto-secundario);
+}
+
+.app-title {
+  margin: 2px 0 0 0;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+/* ===================== CONTENIDO ===================== */
+.app-content {
+  padding: 8px 20px 110px 20px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.seccion {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.seccion.activa {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.seccion-titulo {
+  font-size: 22px;
+  margin: 10px 0 2px 0;
+}
+
+.seccion-descripcion {
+  margin: 0 0 16px 0;
+  color: var(--texto-secundario);
+  font-size: 14px;
+}
+
+.seccion-subtitulo {
+  font-size: 16px;
+  margin: 20px 0 10px 0;
+}
+
+.seccion-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.seccion-header-row .seccion-subtitulo {
+  margin: 0;
+}
+
+/* ===================== TARJETAS ===================== */
+.card {
+  background: var(--fondo-tarjeta);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 18px;
+  margin-bottom: 14px;
+  border: 1px solid var(--borde);
+}
+
+.card-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.card-saldo {
+  background: linear-gradient(135deg, var(--azul), var(--azul-oscuro));
+  color: #fff;
+  border: none;
+}
+
+.card-saldo .card-label {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.card-saldo-valor {
+  margin: 8px 0 0 0;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.resumen-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.card-resumen-valor {
+  margin: 8px 0 0 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.card-ingresos .card-resumen-valor {
+  color: var(--verde);
+}
+
+.card-gastos .card-resumen-valor {
+  color: var(--rojo);
+}
+
+/* ===================== BOTONES ===================== */
+.btn {
+  border: none;
+  border-radius: var(--radio-chico);
+  padding: 14px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease, background 0.2s ease;
+  width: 100%;
+}
+
+.btn:hover {
+  filter: brightness(1.05);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--azul);
+  outline-offset: 2px;
+}
+
+.acciones-rapidas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.btn-ingreso {
+  background: var(--verde);
+  color: #fff;
+}
+
+.btn-gasto {
+  background: var(--rojo);
+  color: #fff;
+}
+
+.btn-primario {
+  background: var(--azul);
+  color: #fff;
+}
+
+.btn-secundario {
+  background: var(--borde);
+  color: var(--texto);
+}
+
+.btn-peligro {
+  background: var(--rojo);
+  color: #fff;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--azul);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  width: auto;
+  padding: 4px;
+}
+
+/* ===================== LISTA DE MOVIMIENTOS ===================== */
+.lista-movimientos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.movimiento-item {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--fondo-tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  padding: 12px 14px;
+  box-shadow: var(--sombra);
+}
+
+.movimiento-icono {
+  font-size: 22px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fondo);
+}
+
+.movimiento-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.movimiento-descripcion {
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movimiento-detalle {
+  margin: 2px 0 0 0;
+  font-size: 12.5px;
+  color: var(--texto-secundario);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movimiento-monto {
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.movimiento-monto.positivo {
+  color: var(--verde);
+}
+
+.movimiento-monto.negativo {
+  color: var(--rojo);
+}
+
+.estado-vacio {
+  text-align: center;
+  padding: 36px 16px;
+  color: var(--texto-secundario);
+}
+
+.estado-vacio-icono {
+  font-size: 34px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.estado-vacio-titulo {
+  margin: 0;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.estado-vacio-subtitulo {
+  margin: 4px 0 0 0;
+  font-size: 13.5px;
+}
+
+/* ===================== ESTADÍSTICAS ===================== */
+.lista-categorias {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.categoria-item {
+  background: var(--fondo-tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  padding: 12px 14px;
+  box-shadow: var(--sombra);
+}
+
+.categoria-nombre {
+  font-weight: 600;
+  font-size: 14.5px;
+}
+
+.categoria-monto {
+  font-weight: 700;
+  color: var(--texto);
+}
+
+/* ===================== CONFIGURACIÓN ===================== */
+.card-config .card-label {
+  margin-bottom: 10px;
+}
+
+.opcion-radio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  font-size: 15px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--borde);
+}
+
+.opcion-radio:last-child {
+  border-bottom: none;
+}
+
+.opcion-radio input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--azul);
+}
+
+/* ===================== NAVEGACIÓN INFERIOR ===================== */
+.nav-inferior {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--fondo-nav);
+  border-top: 1px solid var(--borde);
+  padding: 8px 6px calc(8px + var(--safe-bottom)) 6px;
+  z-index: 40;
+}
+
+.nav-item {
+  flex: 1;
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 2px;
+  color: var(--texto-secundario);
+  cursor: pointer;
+  border-radius: var(--radio-chico);
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.nav-icono {
+  font-size: 20px;
+}
+
+.nav-label {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.nav-item.activo {
+  color: var(--azul);
+  background: rgba(37, 99, 235, 0.1);
+}
+
+/* ===================== BOTÓN FLOTANTE ===================== */
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(78px + var(--safe-bottom));
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--azul);
+  color: #fff;
+  font-size: 30px;
+  border: none;
+  box-shadow: var(--sombra-fuerte);
+  cursor: pointer;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.fab:hover {
+  transform: scale(1.05);
+}
+
+.fab:active {
+  transform: scale(0.93);
+}
+
+.fab-menu {
+  position: fixed;
+  right: 20px;
+  bottom: calc(144px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 61;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fab-menu.abierto {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.fab-menu-item {
+  background: var(--fondo-tarjeta);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--sombra-fuerte);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fab-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.fab-overlay.abierto {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ===================== MODAL ===================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 100;
+}
+
+.modal-overlay.abierto {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal {
+  background: var(--fondo-tarjeta);
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: 22px 22px 0 0;
+  padding: 22px 20px calc(22px + var(--safe-bottom)) 20px;
+  box-shadow: var(--sombra-fuerte);
+  transform: translateY(16px);
+  transition: transform 0.25s ease;
+}
+
+.modal-overlay.abierto .modal {
+  transform: translateY(0);
+}
+
+.modal-pequeno {
+  border-radius: 22px;
+  margin-bottom: auto;
+  margin-top: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.modal-titulo {
+  margin: 0;
+  font-size: 19px;
+}
+
+.modal-subtitulo {
+  margin: 2px 0 0 0;
+  font-size: 13.5px;
+  color: var(--texto-secundario);
+}
+
+.modal-texto {
+  color: var(--texto-secundario);
+  font-size: 14.5px;
+}
+
+.modal-cerrar {
+  background: var(--fondo);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--texto-secundario);
+  cursor: pointer;
+}
+
+.campo-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 14px 0 6px 0;
+  color: var(--texto-secundario);
+}
+
+.campo-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radio-chico);
+  border: 1px solid var(--borde);
+  background: var(--fondo);
+  color: var(--texto);
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.campo-input:focus {
+  outline: none;
+  border-color: var(--azul);
+}
+
+.campo-error {
+  color: var(--rojo);
+  font-size: 12.5px;
+  margin: 5px 0 0 0;
+  min-height: 15px;
+}
+
+.modal-botones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* ===================== TOAST ===================== */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + var(--safe-bottom));
+  transform: translate(-50%, 20px);
+  background: var(--texto);
+  color: var(--fondo);
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--sombra-fuerte);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 200;
+  white-space: nowrap;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 360px) {
+  .card-saldo-valor {
+    font-size: 28px;
+  }
+  .app-title {
+    font-size: 22px;
+  }
+}
+
+/* ============================================================
+   MEJORAS: mes a mes, edición, presupuesto opcional, exportar
+   ============================================================ */
+[hidden] {
+  display: none !important;
+}
+
+/* ---------- Selector de mes ---------- */
+.barra-mes {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 8px 20px;
+  background: var(--fondo);
+}
+
+.mes-texto {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.btn-mes {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--borde);
+  background: var(--fondo-tarjeta);
+  color: var(--texto);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.btn-mes:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.btn-mes:focus-visible,
+.movimiento-item:focus-visible,
+.btn-eliminar:focus-visible {
+  outline: 2px solid var(--azul);
+  outline-offset: 2px;
+}
+
+.acciones-rapidas .btn {
+  padding: 14px 8px;
+  white-space: nowrap;
+}
+
+/* ---------- Tarjeta principal ---------- */
+.linea-resumen {
+  margin: 10px 0 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.barra-presupuesto {
+  margin-top: 14px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+
+.barra-presupuesto-relleno {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: #fff;
+  transition: width 0.4s ease;
+}
+
+.barra-presupuesto.excedido .barra-presupuesto-relleno {
+  background: #FCA5A5;
+}
+
+/* ---------- Movimientos agrupados por día ---------- */
+.dia-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 12px 2px 0 2px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--texto-secundario);
+}
+
+.dia-encabezado:first-child {
+  margin-top: 0;
+}
+
+/* ---------- Categorías con barra ---------- */
+.categoria-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.categoria-monto small {
+  font-weight: 600;
+  color: var(--texto-secundario);
+  margin-left: 4px;
+}
+
+.categoria-barra {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--borde);
+  overflow: hidden;
+}
+
+.categoria-barra div {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--rojo);
+}
+
+/* ---------- Exportar ---------- */
+#btn-exportar {
+  margin-top: 4px;
+}
+
+.nota-exportar {
+  margin: 8px 0 0 0;
+  font-size: 12.5px;
+  color: var(--texto-secundario);
+  text-align: center;
+}
+
+/* ---------- Configuración ---------- */
+.config-ayuda {
+  margin: -4px 0 12px 0;
+  font-size: 13.5px;
+  color: var(--texto-secundario);
+  line-height: 1.4;
+}
+
+.fila-presupuesto {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-compacto {
+  width: auto;
+  padding: 12px 18px;
+}
+
+/* ---------- Formulario ---------- */
+.campo-monto {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.campos-dobles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.btn-eliminar {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px;
+  background: none;
+  border: none;
+  color: var(--rojo);
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 340px) {
+  .campos-dobles {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Tarjetas del día: gastos (rojo) e ingresos (verde) ---------- */
+.card-dia-gastos {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.card-dia-gastos .card-resumen-valor {
+  color: var(--rojo);
+}
+
+.card-dia-ingresos {
+  background: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.3);
+  cursor: pointer;
+}
+
+.card-dia-ingresos .card-resumen-valor {
+  color: var(--verde);
+}
+
+.card-label-nota {
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.card-subdato {
+  margin: 8px 0 0 0;
+  font-size: 12.5px;
+  color: var(--texto-secundario);
+  line-height: 1.35;
+}
+/* ---------- Encabezado de la tarjeta principal y botón del ojo ---------- */
+.card-saldo-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-saldo .etiqueta-gastado {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.btn-ojo {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-ojo:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
