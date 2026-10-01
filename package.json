@@ -1,7 +1,7 @@
 {
-  "name": "finanapp",
+  "name": "finanzapp",
   "version": "1.0.0",
-  "description": "FinanApp - Administración de finanzas personales",
+  "description": "FinanZapp - Control de gastos personales",
   "private": true,
   "scripts": {
     "sync": "npx cap sync android",

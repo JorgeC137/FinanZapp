@@ -1,15 +1,32 @@
 /* ============================================================
-   FinanApp — Lógica de la aplicación
+   FinanZapp — Lógica de la aplicación
    Control de gastos mes a mes. El saldo inicial es opcional:
    puedes registrar solo gastos, y si quieres, un presupuesto
    mensual o tus ingresos para ver cuánto te queda.
    ============================================================ */
 
 // -------------------- ESTADO GLOBAL --------------------
-const CLAVE_MOVIMIENTOS = "finanapp_movimientos";   // misma clave de antes: no se pierden datos
-const CLAVE_TEMA = "finanapp_tema";
-const CLAVE_PRESUPUESTO = "finanapp_presupuesto";
-const CLAVE_OCULTAR = "finanapp_ocultar_montos";
+const CLAVE_MOVIMIENTOS = "finanzapp_movimientos";   // misma clave de antes: no se pierden datos
+const CLAVE_TEMA = "finanzapp_tema";
+const CLAVE_PRESUPUESTO = "finanzapp_presupuesto";
+const CLAVE_OCULTAR = "finanzapp_ocultar_montos";
+
+
+// FinanApp -> FinanZapp: si hay datos guardados con el nombre viejo, se pasan al nuevo una sola vez
+(function migrarClavesAntiguas() {
+  try {
+    ["movimientos", "tema", "presupuesto", "ocultar_montos", "fijos", "fijos_descartados"].forEach(function (nombre) {
+      const vieja = "finanapp_" + nombre;
+      const nueva = "finanzapp_" + nombre;
+      if (localStorage.getItem(nueva) === null && localStorage.getItem(vieja) !== null) {
+        localStorage.setItem(nueva, localStorage.getItem(vieja));
+        localStorage.removeItem(vieja);
+      }
+    });
+  } catch (error) {
+    console.error("No se pudieron migrar los datos guardados:", error);
+  }
+})();
 
 let movimientos = [];
 let presupuestoMensual = 0;           // 0 = sin presupuesto
@@ -50,6 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function refrescarTodo() {
   actualizarBotonOjo();
+  actualizarFijos();
   actualizarBarraPeriodo();
   actualizarDashboard();
   mostrarMovimientos();
@@ -376,6 +394,7 @@ function cerrarFormulario() {
 
 function limpiarFormulario() {
   document.getElementById("form-movimiento").reset();
+  document.getElementById("input-fijo").value = "";
   ["monto", "categoria", "fecha"].forEach(function (campo) {
     document.getElementById("error-" + campo).textContent = "";
   });
@@ -414,13 +433,18 @@ function guardarMovimiento(evento) {
   }
   if (!esValido) return;
 
-    const datos = { tipo: tipo, monto: monto, descripcion: descripcion, categoria: categoria, fecha: fecha };
+  const datos = { tipo: tipo, monto: monto, descripcion: descripcion, categoria: categoria, fecha: fecha };
+  const fijoId = Number(document.getElementById("input-fijo").value) || null;
+  let nuevo = null;
 
   if (idEdicion) {
     const indice = movimientos.findIndex(function (m) { return m.id === idEdicion; });
-    if (indice !== -1) movimientos[indice] = Object.assign({ id: idEdicion }, datos);
+    // Se parte del registro existente para no perder datos extra, como el fijo al que pertenece
+    if (indice !== -1) movimientos[indice] = Object.assign({}, movimientos[indice], datos);
   } else {
-    movimientos.push(Object.assign({ id: Date.now() }, datos));
+    nuevo = Object.assign({ id: Date.now() }, datos);
+    if (fijoId) nuevo.fijoId = fijoId;
+    movimientos.push(nuevo);
   }
 
   guardarDatos();
@@ -433,6 +457,9 @@ function guardarMovimiento(evento) {
     mostrarToast("✅ Cambios guardados");
   } else {
     mostrarToast(tipo === "ingreso" ? "✅ Ingreso guardado" : "✅ Gasto guardado");
+    
+  // Si lo mismo se repite en varios meses, se sugiere volverlo fijo (está en fijos.js)
+  if (nuevo && !fijoId) sugerirFijoSiSeRepite(nuevo);
   }
 }
 

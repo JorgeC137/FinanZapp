@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>FinanApp</title>
+<title>FinanZapp</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -61,6 +61,11 @@
     <div class="acciones-rapidas">
       <button class="btn btn-gasto" onclick="abrirFormulario('gasto')">&#128184; Agregar gasto</button>
       <button class="btn btn-secundario" onclick="abrirFormulario('ingreso')">&#128176; Agregar ingreso</button>
+    </div>
+
+    <div id="bloque-fijos-mes" class="bloque-fijos" hidden>
+      <h2 class="seccion-subtitulo">Fijos de este mes</h2>
+      <div id="lista-fijos-mes" class="lista-movimientos"></div>
     </div>
 
     <div class="seccion-header-row">
@@ -135,6 +140,13 @@
     </div>
 
     <div class="card card-config">
+      <p class="card-label">Gastos e ingresos fijos</p>
+      <p class="config-ayuda">Lo que pagas o recibes cada mes, como el arriendo, los servicios o el sueldo.</p>
+      <div id="lista-fijos-config" class="lista-fijos-config"></div>
+      <button class="btn btn-secundario" onclick="abrirFormularioFijo()">+ Agregar fijo</button>
+    </div>
+
+    <div class="card card-config">
       <p class="card-label">Tema</p>
       <label class="opcion-radio">
         <input type="radio" name="tema" value="claro" id="tema-claro" onchange="cambiarTema('claro')">
@@ -200,6 +212,7 @@
     <form id="form-movimiento" onsubmit="guardarMovimiento(event)" novalidate>
       <input type="hidden" id="input-tipo" value="gasto">
       <input type="hidden" id="input-id" value="">
+      <input type="hidden" id="input-fijo" value="">
 
       <label class="campo-label" for="input-monto">Monto</label>
       <input class="campo-input campo-monto" type="number" id="input-monto" placeholder="0" min="1" step="1" inputmode="numeric">
@@ -222,6 +235,70 @@
       </div>
       <button type="button" class="btn-eliminar" id="btn-eliminar-movimiento" onclick="pedirEliminarMovimiento()" hidden>Eliminar este registro</button>
     </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: GASTO O INGRESO FIJO ===================== -->
+<div class="modal-overlay" id="modal-fijo">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-titulo" id="fijo-titulo">Agregar fijo</h3>
+        <p class="modal-subtitulo">Algo que se repite cada mes</p>
+      </div>
+      <button class="modal-cerrar" onclick="cerrarFormularioFijo()" aria-label="Cerrar">&times;</button>
+    </div>
+
+    <input type="hidden" id="fijo-id" value="">
+
+    <div class="selector-tipo">
+      <label><input type="radio" name="fijo-tipo" value="gasto" id="fijo-tipo-gasto" onchange="cambiarTipoFijo('gasto')" checked> Gasto</label>
+      <label><input type="radio" name="fijo-tipo" value="ingreso" id="fijo-tipo-ingreso" onchange="cambiarTipoFijo('ingreso')"> Ingreso</label>
+    </div>
+
+    <label class="campo-label" for="fijo-nombre">Nombre</label>
+    <input class="campo-input" type="text" id="fijo-nombre" placeholder="Ej. Arriendo, Netflix, Sueldo" maxlength="60">
+    <p class="campo-error" id="error-fijo-nombre"></p>
+
+    <label class="campo-label" for="fijo-monto">Monto aproximado</label>
+    <input class="campo-input campo-monto" type="number" id="fijo-monto" placeholder="0" min="1" step="1" inputmode="numeric">
+    <p class="campo-error" id="error-fijo-monto"></p>
+
+    <label class="campo-label" for="fijo-categoria">Categoría</label>
+    <select class="campo-input" id="fijo-categoria"></select>
+    <p class="campo-error" id="error-fijo-categoria"></p>
+
+    <label class="campo-label" for="fijo-dia">Día del mes (opcional)</label>
+    <input class="campo-input" type="number" id="fijo-dia" placeholder="Ej. 5" min="1" max="31" step="1" inputmode="numeric">
+    <p class="campo-error" id="error-fijo-dia"></p>
+
+    <p class="campo-label">¿Cómo lo anoto?</p>
+    <label class="opcion-radio">
+      <input type="radio" name="fijo-modo" value="confirmar" id="fijo-modo-confirmar" checked>
+      <span>Recordármelo, y yo lo confirmo</span>
+    </label>
+    <label class="opcion-radio">
+      <input type="radio" name="fijo-modo" value="auto" id="fijo-modo-auto">
+      <span>Anotarlo solo cada mes (si no hay día, el día 1)</span>
+    </label>
+
+    <div class="modal-botones">
+      <button class="btn btn-secundario" onclick="cerrarFormularioFijo()">Cancelar</button>
+      <button class="btn btn-primario" onclick="guardarFijo()">Guardar</button>
+    </div>
+    <button type="button" class="btn-eliminar" id="btn-eliminar-fijo" onclick="pedirEliminarFijo()" hidden>Eliminar este fijo</button>
+  </div>
+</div>
+
+<!-- ===================== MODAL: SUGERENCIA DE FIJO ===================== -->
+<div class="modal-overlay" id="modal-sugerencia">
+  <div class="modal modal-pequeno">
+    <h3 class="modal-titulo">¿Lo agregamos como fijo?</h3>
+    <p class="modal-texto" id="sugerencia-texto"></p>
+    <div class="modal-botones">
+      <button class="btn btn-secundario" onclick="descartarSugerencia()">No, gracias</button>
+      <button class="btn btn-primario" onclick="aceptarSugerencia()">Sí, agregarlo</button>
+    </div>
   </div>
 </div>
 
@@ -280,5 +357,6 @@
 
 <script src="lib/jspdf.umd.min.js"></script>
 <script src="app.js"></script>
+<script src="fijos.js"></script>
 </body>
 </html>

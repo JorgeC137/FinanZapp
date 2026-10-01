@@ -19,10 +19,12 @@ App para llevar el control de gastos del día a día, mes a mes, y saber en qué
 - Tema claro y oscuro.
 - Calendario para ver un día, una semana o cualquier rango de hasta 31 días.
 - Informe anual en CSV (para analizar) y en PDF (con gráfica, para guardar o imprimir).
+- Gastos e ingresos fijos, con recordatorio para confirmarlos o anotados automáticamente cada mes.
+- Sugerencia automática cuando un gasto se repite en varios meses.
 
 ## Próximas mejoras
 
-- Gastos fijos que se repiten cada mes.
+- Varios idiomas y monedas, para usar la app en otros países.
 - Límites por categoría para controlar los gastos hormiga.
 - Comparación con el mes anterior.
 - Copia de seguridad en Google Drive.
